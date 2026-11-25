@@ -192,7 +192,8 @@ const PLAN={
   rest:{t:'Dinlenme',sub:'8–10 bin adım, hafif yürüyüş',type:'rest'}
 };
 const WEEKMAP=['rest','altA','ustA','rest','altB','rest','ustB'];
-const ORDER=[1,2,3,4,5,6,0];
+const CH=['altA','ustA','altB','ustB'];
+const LIFT=['altA','ustA','altB','ustB'];
 const DN=['Paz','Pzt','Sal','Çar','Per','Cum','Cmt'];
 const WARM={
   alt:['Bisiklet veya eğimli yürüyüş 5–6 dk','Glute bridge × 10','Bantla yan yürüyüş × 10','Bodyweight squat × 10, yavaş','Reverse lunge × 5 / taraf','Ayak bileği dorsifleksiyon × 10','İlk harekette 2–3 ısınma seti'],
@@ -222,7 +223,7 @@ let mode='local',COL=null,sync='Kayıtlar bu telefonda saklanıyor. Ayda bir yed
 let draft=lsGet('ayca-draft',{});
 const VIEWS=['bugun','gecmis','olcum'];
 let view=VIEWS.includes(location.hash.slice(1))?location.hash.slice(1):'bugun';
-let sel=new Date().getDay();
+let sel=null;
 let pending=false,confirmDel=null,metaQ=Promise.resolve();
 
 function weekNo(){if(!S.meta.start)return 1;const a=new Date(S.meta.start+'T12:00:00'),b=new Date(today()+'T12:00:00');return Math.max(1,Math.floor((b-a)/864e5/7)+1)}
@@ -247,12 +248,13 @@ function render(){
   pending=false;
   document.querySelectorAll('.seg button').forEach(b=>b.setAttribute('aria-current',String(b.dataset.v===view)));
   const ch=$('#chips');ch.hidden=view!=='bugun';
-  if(view==='bugun'){ch.innerHTML=ORDER.map(d=>`<button class="chip${d===new Date().getDay()?' today':''}" data-act="day" data-d="${d}" aria-pressed="${d===sel}">${DN[d]}<small>${PLAN[WEEKMAP[d]].t}</small></button>`).join('');main.innerHTML=renderDay()}
+  if(view==='bugun'){const nx=nextKey();if(sel==null)sel=nx;ch.innerHTML=CH.map(k=>`<button class="chip${k===nx?' today':''}" data-act="day" data-k="${k}" aria-pressed="${k===sel}">${PLAN[k].t}${k===nx?'<small>sıradaki</small>':''}</button>`).join('');main.innerHTML=renderDay()}
   else if(view==='gecmis')main.innerHTML=renderHist();
   else main.innerHTML=renderBody();
 }
 
-function renderDay(){const key=WEEKMAP[sel],P=PLAN[key];return P.type==='lift'?renderLift(key,P):P.type==='cardio'?renderCardio(P):renderRest(P)}
+function nextKey(){const l=sorted().find(x=>LIFT.includes(x.day));return l?LIFT[(LIFT.indexOf(l.day)+1)%LIFT.length]:'altA'}
+function renderDay(){const key=sel,P=PLAN[key];return P.type==='lift'?renderLift(key,P):P.type==='cardio'?renderCardio(P):renderRest(P)}
 
 function renderLift(key,P){
   const D=dk(key);let tot=0,done=0;
@@ -273,7 +275,7 @@ function renderLift(key,P){
   }).join('');
   const W=WARM[P.warm];const wd=W.filter((_,k)=>D.w[k]).length;
   const w=weekNo();
-  return `<div class="hero"><div class="wrap"><p class="kick">${DN[sel]} · Hafta ${w}</p><h1>${P.t}</h1><p class="sub">${esc(P.sub)} · ${early()?'ilk 2 hafta: 2 set, RIR 3':'tam set, RIR 1–2'}</p><div class="prog"><div class="bar"><i style="width:${tot?Math.round(done/tot*100):0}%"></i></div><b>${done}/${tot} set</b></div></div></div>
+  return `<div class="hero"><div class="wrap"><p class="kick">Hafta ${w}${sel===nextKey()?' · sıradaki antrenman':''}</p><h1>${P.t}</h1><p class="sub">${esc(P.sub)} · ${early()?'ilk 2 hafta: 2 set, RIR 3':'tam set, RIR 1–2'}</p><div class="prog"><div class="bar"><i style="width:${tot?Math.round(done/tot*100):0}%"></i></div><b>${done}/${tot} set</b></div></div></div>
   <div class="wrap">
   <details class="card"${wd<W.length&&done===0?' open':''}><summary>Isınma <span class="mini">${wd}/${W.length}</span></summary>${W.map((t,k)=>`<label class="chk"><input type="checkbox" data-warm="${k}"${D.w[k]?' checked':''}>${esc(t)}</label>`).join('')}</details>
   ${P.warm==='alt'?'<p class="note">İdrar kaçırma, pelviste basınç hissi ya da öne eğilince karında kabarma olursa ağırlığı azalt, zıplama yapma ve pelvik taban fizyoterapistine danış.</p>':''}
@@ -295,7 +297,7 @@ function renderCardio(P){
   if(R.ph){const[r,w,n]=R.ph;let s='';for(let i=0;i<n;i++){s+=`<span class="r" style="flex:${r}"></span>`;if(w&&i<n-1)s+=`<span class="w" style="flex:${w}"></span>`}strip=`<div class="strip" aria-hidden="true">${s}</div><div class="legend"><span>Beyaz: koşu</span><span>Soluk: yürüyüş</span></div>`}
   else strip=`<div class="strip" aria-hidden="true"><span class="w" style="flex:1"></span></div><div class="legend"><span>${esc(R.d)}</span></div>`;
   const runs=(S.meta.runs||[]).slice().sort((a,b)=>b.ts-a.ts).slice(0,6);
-  return `<div class="hero"><div class="wrap"><p class="kick">${DN[sel]} · Hafta ${weekNo()}</p><h1>Kondisyon</h1><p class="sub">${R.w==='Hazırlık'?'Hazırlık aşaması':'Koşu haftası '+esc(R.w)} · ${esc(R.p)}</p>${strip}</div></div>
+  return `<div class="hero"><div class="wrap"><p class="kick">Hafta ${weekNo()}${sel===nextKey()?' · sıradaki antrenman':''}</p><h1>Kondisyon</h1><p class="sub">${R.w==='Hazırlık'?'Hazırlık aşaması':'Koşu haftası '+esc(R.w)} · ${esc(R.p)}</p>${strip}</div></div>
   <div class="wrap">
   <section class="card"><p class="mini" style="margin:0">Aşama</p><div class="fz">${RUNS.map((r,i)=>`<button class="chip" data-act="rw" data-w="${i}" aria-pressed="${i===k}">${esc(r.w)}</button>`).join('')}</div>
   <h2 class="h2" style="margin-top:10px">${esc(R.p)}</h2><p class="mini" style="margin:0">${esc(R.d)}</p>
@@ -313,7 +315,7 @@ function renderCardio(P){
 
 function renderRest(P){
   const ss=sorted().slice(0,3);
-  return `<div class="hero"><div class="wrap"><p class="kick">${DN[sel]} · Hafta ${weekNo()}</p><h1>Dinlenme</h1><p class="sub">${esc(P.sub)}</p></div></div>
+  return `<div class="hero"><div class="wrap"><p class="kick">Hafta ${weekNo()}${sel===nextKey()?' · sıradaki antrenman':''}</p><h1>Dinlenme</h1><p class="sub">${esc(P.sub)}</p></div></div>
   <div class="wrap"><section class="card"><p style="margin:0">Bugün program boş. Bir antrenmanı kaçırdıysan yukarıdan o günü seçip yapabilirsin.</p></section>
   ${ss.length?`<h2 class="h2">Son antrenmanlar</h2>${ss.map(s=>`<div class="line"><span>${esc(fmtD(s.date))} · ${esc(s.title)}</span><span>${s.ex.reduce((a,e)=>a+e.sets.length,0)} set</span></div>`).join('')}`:''}
   ${settings(null)}</div>`;
@@ -367,20 +369,20 @@ async function exportData(){
 }
 /* actions */
 function saveWorkout(){
-  const key=WEEKMAP[sel],P=PLAN[key],D=dk(key);
+  const key=sel,P=PLAN[key],D=dk(key);
   const ex=P.ex.map((e,i)=>{const sets=[];for(let j=0;j<nSets(e);j++){const v=D.v[i+'-'+j];if(!v)continue;const r=num(v.r);if(r==null||(!v.d&&v.r===''))continue;sets.push([e.kind==='kg'?num(v.kg):null,r])}return{n:e.n,kind:e.kind,sets}}).filter(x=>x.sets.length);
   if(!ex.length){toast('Kaydedilecek set yok. Setleri ✓ ile işaretle.');return}
   const s={id:'s-'+Date.now(),ts:Date.now(),date:today(),day:key,title:P.t,ex};
   if(!S.meta.start){S.meta.start=today();putMeta()}
-  putSession(s);delete draft[key];lsSet('ayca-draft',draft);stopTimer();
+  putSession(s);sel=nextKey();delete draft[key];lsSet('ayca-draft',draft);stopTimer();
   toast(P.t+' kaydedildi · '+ex.reduce((a,e)=>a+e.sets.length,0)+' set');render();window.scrollTo(0,0);
 }
 document.addEventListener('click',e=>{
   const b=e.target.closest('[data-act]');if(!b)return;ensureAudio();const act=b.dataset.act;
   if(act==='nav'){view=b.dataset.v;confirmDel=null;try{history.replaceState(null,'','#'+view)}catch(err){}render();window.scrollTo(0,0)}
-  else if(act==='day'){sel=+b.dataset.d;render();window.scrollTo(0,0)}
+  else if(act==='day'){sel=b.dataset.k;render();window.scrollTo(0,0)}
   else if(act==='done'){
-    const key=WEEKMAP[sel],D=dk(key),i=+b.dataset.i,j=+b.dataset.j,id=i+'-'+j,v=D.v[id]||{},e2=PLAN[key].ex[i];
+    const key=sel,D=dk(key),i=+b.dataset.i,j=+b.dataset.j,id=i+'-'+j,v=D.v[id]||{},e2=PLAN[key].ex[i];
     if(v.d)v.d=false;
     else{const row=b.closest('.set'),ki=row.querySelector('[data-f=kg]'),ri=row.querySelector('[data-f=r]');
       if(ki)v.kg=ki.value!==''?ki.value:(ki.placeholder==='kg'?'':ki.placeholder);
@@ -392,7 +394,7 @@ document.addEventListener('click',e=>{
   }
   else if(act==='finish')saveWorkout();
   else if(act==='export')exportData();
-  else if(act==='resetday'){delete draft[WEEKMAP[sel]];lsSet('ayca-draft',draft);render();toast('Günün girişleri temizlendi')}
+  else if(act==='resetday'){delete draft[sel];lsSet('ayca-draft',draft);render();toast('Günün girişleri temizlendi')}
   else if(act==='rw'){S.meta.runWeek=+b.dataset.w;putMeta();render()}
   else if(act==='runstart'){const R=RUNS[S.meta.runWeek|0];if(R&&R.ph)startTimer(runPhases(R.ph))}
   else if(act==='runlog'){
@@ -410,9 +412,9 @@ document.addEventListener('click',e=>{
   else if(act==='bodydel'){S.meta.body=(S.meta.body||[]).filter(x=>x.date!==b.dataset.date);putMeta();render()}
   else if(act==='sdel'){const id=b.dataset.id;if(confirmDel===id){confirmDel=null;delSession(id);toast('Kayıt silindi')}else confirmDel=id;render()}
 });
-document.addEventListener('input',e=>{const t=e.target;if(!t.dataset||!t.dataset.f)return;const key=WEEKMAP[sel],D=dk(key),id=t.dataset.i+'-'+t.dataset.j;D.v[id]=Object.assign(D.v[id]||{},{[t.dataset.f]:t.value});saveDraft()});
+document.addEventListener('input',e=>{const t=e.target;if(!t.dataset||!t.dataset.f)return;const key=sel,D=dk(key),id=t.dataset.i+'-'+t.dataset.j;D.v[id]=Object.assign(D.v[id]||{},{[t.dataset.f]:t.value});saveDraft()});
 document.addEventListener('change',e=>{const t=e.target;
-  if(t.dataset.warm!=null){dk(WEEKMAP[sel]).w[t.dataset.warm]=t.checked;saveDraft();render()}
+  if(t.dataset.warm!=null){dk(sel).w[t.dataset.warm]=t.checked;saveDraft();render()}
   else if(t.dataset.crit!=null){S.meta.criteria[+t.dataset.crit]=t.checked;putMeta();render()}
   else if(t.id==='st'){S.meta.start=t.value||null;putMeta();render()}
   else if(t.id==='imp'&&t.files&&t.files[0]){const fr=new FileReader();fr.onload=()=>{try{const d=JSON.parse(fr.result);if(!d||!Array.isArray(d.sessions))throw 0;const have=new Set(S.sessions.map(x=>x.id));d.sessions.forEach(x=>{if(x&&x.id&&!have.has(x.id))S.sessions.push(x)});if(d.meta)S.meta=Object.assign(defMeta(),S.meta,d.meta);mirror();render();toast('Yedek yüklendi')}catch(err){toast('Bu dosya okunamadı')}};fr.readAsText(t.files[0])}
