@@ -110,6 +110,19 @@ details.card[open]>summary::after{content:'–'}
 .toast.show{opacity:1}
 @media(prefers-reduced-motion:reduce){.timer,.bar i,.toast{transition:none}.timer.end{animation:none}}
 @media(max-width:380px){.seg button{padding:0 9px;font-size:14px}.brand{font-size:21px}}
+.how{margin:8px 0 10px;border:1px solid var(--line);border-radius:12px;padding:0 12px}
+.how>summary{cursor:pointer;font-weight:600;padding:10px 0;list-style:none;display:flex;justify-content:space-between;align-items:center}
+.how>summary::-webkit-details-marker{display:none}
+.how>summary::after{content:'▾';color:var(--mut)}
+.how[open]>summary::after{content:'▴'}
+.anim{position:relative;aspect-ratio:4/3;border-radius:10px;overflow:hidden;background:#111;margin-bottom:6px}
+.anim img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.anim img.b{animation:pose 2.6s ease-in-out infinite}
+@keyframes pose{0%,30%{opacity:0}50%,80%{opacity:1}100%{opacity:0}}
+@media (prefers-reduced-motion:reduce){.anim img.b{animation-duration:5s}}
+.how ol{margin:6px 0 8px;padding-left:20px}
+.how li{margin:2px 0}
+.vid{display:inline-block;margin:0 0 12px;font-weight:600;color:inherit}
 </style>
 </head>
 <body>
@@ -153,6 +166,45 @@ const restTxt=s=>s%60===0?s/60+' dk':s%30===0?String(s/60).replace('.',',')+' dk
 const mmss=s=>Math.floor(s/60)+':'+pad(s%60);
 
 const E=(n,sets,rep,lo,hi,rir,rest,note,kind)=>({n,sets,rep,lo,hi,rir,rest,note:note||'',kind:kind||'kg'});
+const IMGBASE='img/';
+const HOW={
+'Hack squat / back squat':['Hack_Squat','hack squat',['Sırt ve omuzlar pedlere yapışık, ayaklar platformda omuz genişliğinde','Dizleri ayak uçları yönünde bükerek kontrollü in, topuklar kalkmasın','Topuklardan iterek kalk, dizleri tam kilitleme']],
+'Bulgarian split squat':['Split_Squat_with_Dumbbells','bulgarian split squat',['Arka ayağın üstü sehpada, ön ayak bir büyük adım ileride','Arka diz yere doğru dik insin, ön diz ayak ucuyla aynı yönde','Ön topuktan iterek kalk']],
+'Leg extension':['Leg_Extensions','leg extension',['Diz makinenin dönme ekseni hizasında, ped ayak bileğinin üstünde','Bacağı düzleşene kadar kaldır, üstte 1 sn bekle','Yavaş indir']],
+'Oturarak leg curl':['Seated_Leg_Curl','seated leg curl',['Diz, makinenin dönme ekseniyle aynı hizada','Topuğu kontrollü şekilde aşağı ve geriye çek','Dönüşü yavaş yap, ağırlığı bırakma']],
+'Ayakta calf raise':['Standing_Calf_Raises','standing calf raise',['Ayak önü basamakta, topuklar boşta','Topukları en alta indir, sonra parmak ucunda en üste çık','Üstte 1 sn bekle, yavaş in']],
+'Bantla ayak bileği eversiyonu':[null,'resistance band ankle eversion',['Otur, bandı ayağının dışına dola, diğer ucunu sabitle ya da öbür ayağınla tut','Topuk yerde sabitken ayak tabanını dışa doğru çevir','Yavaşça geri dön; bacağı değil sadece ayak bileğini oynat']],
+'Pallof press':['Pallof_Press','pallof press',['Makaraya yan dur, tutamağı göğsünde iki elle tut','Kolları öne düz uzat, gövdenin makineye dönmesine izin verme','2 sn tut, göğsüne geri getir']],
+'Bench press':['Barbell_Bench_Press_-_Medium_Grip','bench press',['Gözler barın altında, kürek kemikleri geriye ve aşağı sıkışık, ayaklar yerde','Barı kontrollü şekilde göğüs ucu hizasına indir, dirsekler gövdeyle yaklaşık 45°','Göğüsten iterek kaldır, kalça sehpadan kalkmasın']],
+'Göğüs destekli row':['Dumbbell_Incline_Row','chest supported dumbbell row',['Göğsünü eğimli sehpaya daya, kollar aşağıda','Dirsekleri geriye çekip kürek kemiklerini sık','Yavaş indir, göğüs sehpadan kalkmasın']],
+'Oturarak omuz press (dambıl)':['Dumbbell_Shoulder_Press','oturarak dambıl omuz press',['Sırtlık dik, dambıllar omuz hizasında','Yukarı iterken beli sırtlığa yapışık tut','Dambılları kulak hizasına kadar kontrollü indir']],
+'Lat pulldown':['Wide-Grip_Lat_Pulldown','lat pulldown',['Barı omuz genişliğinden biraz geniş tut, göğsünü hafif kaldır','Dirsekleri aşağı ve yanlara çekerek barı köprücük kemiğine indir','Geriye sallanma, yukarıda kolları tam aç']],
+'Lateral raise':['Side_Lateral_Raise','dumbbell lateral raise',['Dirsekler hafif bükülü, dambıllar yanında','Kolları omuz hizasına kadar yana kaldır, omuzlar kulağa doğru kalkmasın','Yavaş indir, gövdeyle sallanma']],
+'Triceps pushdown':['Triceps_Pushdown','triceps pushdown',['Dirsekler gövdenin yanında sabit','Kollar tamamen düzleşene kadar aşağı it','Dirsekleri oynatmadan yavaşça geri bırak']],
+'Dambıl curl':['Dumbbell_Bicep_Curl','dumbbell biceps curl',['Dirsekler gövdenin yanında sabit, avuçlar öne bakar','Dambılları omuza doğru kaldır, gövdeyi sallama','Kol tam açılana kadar yavaş indir']],
+'Face pull':['Face_Pull','face pull',['Kablo göz hizasında, ip tutamağı kullan','İpi yüzüne doğru çek, elleri kulakların yanına doğru ayır','Dirsekler yüksek, sonda kürek kemiklerini sık']],
+'Romanian deadlift':['Romanian_Deadlift','romanian deadlift',['Dizler hafif bükülü, ağırlık bacaklara yakın','Kalçayı geriye iterek öne eğil, sırt düz kalsın','Arka bacakta gerilme hissedince kalçayı öne iterek doğrul']],
+'Leg press':['Leg_Press','leg press',['Ayaklar platformda omuz genişliğinde, bel ve kalça sırtlığa yapışık','Dizleri göğse doğru kontrollü indir, kalça sırtlıktan kalkmasın','İterken dizleri tam kilitleme']],
+'Hip thrust':['Barbell_Hip_Thrust','hip thrust',['Kürek kemiklerinin alt ucu sehpada, bar kalça kemiğinin üstünde (ped kullan)','Topuklardan iterek kalçayı gövdeyle düz çizgi olana kadar kaldır','Üstte 1 sn kalçanı sık, beli fazla kavislendirme, çene hafif içeride']],
+'Yüzüstü leg curl / Nordic':['Lying_Leg_Curls','nordic hamstring curl',['Leg curl: yüzüstü yat, ped aşil tendonunun üstünde, kalçayı kaldırmadan topuğu kalçana çek','Nordic: dizler yastıkta, ayak bilekleri sabit; gövde dizden başa düz kalsın','Olabildiğince yavaş öne in, ellerle yere destek alıp geri dön']],
+'Walking lunge':['Dumbbell_Lunges','walking lunge',['Dambıllar yanda, gövde dik','Büyük bir adım at, arka diz yere yaklaşana kadar in','Ön topuktan iterek diğer bacakla bir sonraki adıma geç']],
+'Oturarak calf raise':['Seated_Calf_Raise','seated calf raise',['Ped dizlerin hemen üstünde, ayak önü basamakta','Topukları en alta indir, sonra olabildiğince yukarı kaldır','Üstte 1 sn bekle, yavaş in']],
+'Tek ayak denge (yastık/Bosu)':[null,'tek ayak denge bosu egzersizi',['Denge yastığında tek ayak üstünde dur, diz hafif bükülü','Dizin içe kaçmasına izin verme, kalça seviyeli kalsın','30 sn tut; kolaylaşınca gözlerini kapat']],
+'Dead bug':['Dead_Bug','dead bug egzersizi',['Sırt üstü yat, kollar tavana, kalça ve dizler 90°','Nefes vererek beli yere bastır, karşı kol ve bacağı uzat','Bel yerden kalkıyorsa hareketi kısalt']],
+'Barfiks (gerekirse destekli)':['Pullups','barfiks',['Barı omuz genişliğinden biraz geniş, avuçlar öne bakacak şekilde tut','Kürek kemiklerini aşağı çekerek başla, çene barı geçene kadar çık','Kollar tam açılana kadar kontrollü in; zorlanırsan bant ya da destekli makine kullan']],
+'İncline dambıl press':['Incline_Dumbbell_Press','incline dumbbell press',['Sehpa yaklaşık 30°, kürek kemikleri geriye ve aşağı','Dambılları göğsün üstüne doğru it','Göğüs hizasına kadar yavaş indir']],
+'Kablo row':['Seated_Cable_Rows','seated cable row',['Dik otur, dizler hafif bükülü','Tutamağı göbeğe doğru çek, kürek kemiklerini birbirine yaklaştır','Gövdeyle sallanma, dönüşü yavaş yap']],
+'Makine chest press / dips':['Leverage_Chest_Press','machine chest press',['Koltuğu tutamaklar göğüs ortası hizasında olacak şekilde ayarla','Kürek kemiklerini geriye ve aşağı sabitle, öne doğru it','Dirsekleri kilitlemeden yavaşça geri gel']],
+'Reverse fly (arka omuz)':['Reverse_Machine_Flyes','reverse pec deck rear delt fly',['Göğsün pede dayalı, tutamaklar omuz hizasında','Kolları hafif bükülü tutarak yana ve geriye aç','Omuzlar kulağa kalkmasın, yavaş geri gel']],
+'Baş üstü triceps extension':['Standing_Dumbbell_Triceps_Extension','overhead dumbbell triceps extension',['Dambılı iki elle başının üstünde tut','Dirsekleri sabit tutarak dambılı başının arkasına indir','Kollar düzleşene kadar yukarı it, beli kavislendirme']],
+'Hammer curl':['Hammer_Curls','hammer curl',['Avuçlar birbirine bakar','Dirsekler sabit, dambılları omza doğru kaldır','Yavaş indir']],
+'Kablo crunch':['Cable_Crunch','cable crunch',['Makaraya dönük diz çök, ipi başının iki yanında tut','Kalça sabit, gövdeyi bükerek dirsekleri dizlere getir','Yavaşça doğrul; hareketi kollarla değil karınla yap']]
+};
+const howOpen=new Set();
+function howHtml(n){const h=HOW[n];if(!h)return'';const[id,q,c]=h;
+  const img=id?`<div class="anim" aria-label="${esc(n)}: başlangıç ve bitiş pozisyonu"><img src="${IMGBASE}${id}-0.jpg" alt="" loading="lazy"><img class="b" src="${IMGBASE}${id}-1.jpg" alt="" loading="lazy"></div>`:'';
+  return `<details class="how" data-how="${esc(n)}"${howOpen.has(n)?' open':''}><summary>Nasıl yapılır?</summary>${img}<ol>${c.map(x=>`<li>${esc(x)}</li>`).join('')}</ol><a class="vid" href="https://www.youtube.com/results?search_query=${encodeURIComponent(q+' nasıl yapılır')}" target="_blank" rel="noopener">▶ Video izle (YouTube)</a></details>`}
+document.addEventListener('toggle',e=>{const d=e.target;if(d.matches&&d.matches('details.how')){const n=d.dataset.how;d.open?howOpen.add(n):howOpen.delete(n)}},true);
 const PLAN={
   altA:{t:'Alt A',sub:'Squat odaklı',type:'lift',warm:'alt',ex:[
     E('Hack squat / back squat',3,'6–10',6,10,'2',150,'Diz ağrısızsa derinliği kademeli artır'),
@@ -272,7 +324,7 @@ function renderLift(key,P){
       const kgIn=e.kind==='kg'?`<label class="f">kg<input id="kg-${key}-${i}-${j}" data-f="kg" data-i="${i}" data-j="${j}" inputmode="decimal" autocomplete="off" value="${esc(v.kg??'')}" placeholder="${esc(pkg||'kg')}"></label>`:'';
       rows+=`<div class="set${v.d?' on':''}${e.kind==='kg'?'':' nokg'}"><span class="sn">${j+1}</span>${kgIn}<label class="f">${e.kind==='time'?'saniye':'tekrar'}<input id="r-${key}-${i}-${j}" data-f="r" data-i="${i}" data-j="${j}" inputmode="numeric" autocomplete="off" value="${esc(v.r??'')}" placeholder="${esc(pr)}"></label><button class="ck" data-act="done" data-i="${i}" data-j="${j}" aria-label="${j+1}. seti ${v.d?'geri al':'tamamla'}" aria-pressed="${!!v.d}">${CHECK}</button></div>`;
     }
-    return `<section class="card ex"><div class="exh"><h3>${esc(e.n)}</h3><span class="tgt">${n} × ${esc(e.rep)}</span></div><p class="meta">RIR ${esc(rirOf(e))} · dinlenme ${restTxt(e.rest)}${e.note?' · '+esc(e.note):''}</p><p class="last">${esc(lastTxt)}</p>${up?`<p class="up">${e.kind==='kg'?'Geçen sefer tüm setler üst sınırdaydı: ağırlığı %2,5–5 artır':'Üst sınıra ulaştın: zorluğu artır'}</p>`:''}${rows}</section>`;
+    return `<section class="card ex"><div class="exh"><h3>${esc(e.n)}</h3><span class="tgt">${n} × ${esc(e.rep)}</span></div><p class="meta">RIR ${esc(rirOf(e))} · dinlenme ${restTxt(e.rest)}${e.note?' · '+esc(e.note):''}</p><p class="last">${esc(lastTxt)}</p>${howHtml(e.n)}${up?`<p class="up">${e.kind==='kg'?'Geçen sefer tüm setler üst sınırdaydı: ağırlığı %2,5–5 artır':'Üst sınıra ulaştın: zorluğu artır'}</p>`:''}${rows}</section>`;
   }).join('');
   const W=WARM[P.warm];const wd=W.filter((_,k)=>D.w[k]).length;
   const w=weekNo();
