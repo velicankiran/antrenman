@@ -157,22 +157,23 @@ const PLAN={
   altA:{t:'Alt A',sub:'Squat odaklı',type:'lift',warm:'alt',ex:[
     E('Hack squat / back squat',3,'6–10',6,10,'2',150,'Diz ağrısızsa derinliği kademeli artır'),
     E('Bulgarian split squat',3,'8–12 / taraf',8,12,'2',120,'Opere taraftan başla · tek dambıl kg'),
-    E('Leg extension',3,'12–15',12,15,'1–2',75,'Kontrollü, tam açı'),
+    E('Leg extension',3,'12–15',12,15,'1–2',75,'Son seti tek bacak · opere tarafa 1 ek tek bacak set'),
     E('Oturarak leg curl',3,'10–12',10,12,'1–2',75),
     E('Ayakta calf raise',3,'10–15',10,15,'1–2',60,'Altta 1 sn bekle'),
     E('Bantla ayak bileği eversiyonu',2,'15–20',15,20,'2',45,'Greft alınan tarafa öncelik','reps'),
     E('Pallof press',3,'10 / taraf',10,10,'2',45)]},
-  ustA:{t:'Üst A',sub:'Göğüs, sırt, omuz',type:'lift',warm:'ust',ex:[
+  ustA:{t:'Üst A',sub:'Göğüs, sırt, omuz · duruş',type:'lift',warm:'ust',ex:[
     E('Bench press',3,'6–10',6,10,'2',150),
     E('Göğüs destekli row',3,'8–12',8,12,'1–2',120),
     E('Oturarak omuz press (dambıl)',3,'8–12',8,12,'2',120,'Tek dambıl kg'),
     E('Lat pulldown',3,'10–12',10,12,'1–2',90),
     E('Lateral raise',3,'12–20',12,20,'1',60),
-    E('Triceps pushdown',3,'10–15',10,15,'1',60,'Curl ile süperset yapılabilir'),
-    E('Dambıl curl',3,'10–15',10,15,'1',60)]},
+    E('Triceps pushdown',2,'10–15',10,15,'1',60,'Curl ile süperset yapılabilir'),
+    E('Dambıl curl',2,'10–15',10,15,'1',60),
+    E('Face pull',3,'12–15',12,15,'1',60,'Duruş: dirsekler yüksek, sonda kürek kemiklerini sık')]},
   altB:{t:'Alt B',sub:'Kalça ve hamstring odaklı',type:'lift',warm:'alt',ex:[
     E('Romanian deadlift',3,'6–10',6,10,'2',150,'Sırt nötral, kalçadan menteşe'),
-    E('Leg press',3,'10–15',10,15,'1–2',120,'Son seti tek bacak yapabilirsin'),
+    E('Leg press',3,'10–15',10,15,'1–2',120,'Son seti tek bacak · opere taraftan başla'),
     E('Hip thrust',3,'8–12',8,12,'1–2',120),
     E('Yüzüstü leg curl / Nordic',3,'6–10',6,10,'2',90,"Nordic'e 4. haftadan sonra geç"),
     E('Walking lunge',2,'10 / taraf',10,10,'2',90,'Tek dambıl kg'),
@@ -196,8 +197,8 @@ const CH=['altA','ustA','altB','ustB','kond'];
 const LIFT=['altA','ustA','altB','ustB'];
 const DN=['Paz','Pzt','Sal','Çar','Per','Cum','Cmt'];
 const WARM={
-  alt:['Bisiklet 5–6 dk (ilk haftalar 8 dk)','Glute bridge × 10','Bantla yan yürüyüş × 10','Bodyweight squat × 10, yavaş','Reverse lunge × 5 / taraf','Ayak bileği dorsifleksiyon × 10','İlk harekette 2–3 ısınma seti'],
-  ust:['Bisiklet 5–6 dk','Kol çevirme × 10','Bantla pull-apart × 10','Wall slide × 10','Thoracic rotation × 8 / taraf','Scapular push-up × 10','İlk harekette 2–3 ısınma seti']
+  alt:['Bisiklet 5–6 dk (ilk haftalar 8 dk)','Glute bridge × 10','Bantla yan yürüyüş × 10','Bodyweight squat × 10, yavaş','Reverse lunge × 5 / taraf','Ayak bileği dorsifleksiyon × 10','Yarım diz çökük kalça fleksörü esnetme 30 sn / taraf','İlk harekette 2–3 ısınma seti'],
+  ust:['Bisiklet 5–6 dk','Kol çevirme × 10','Bantla pull-apart × 10','Wall slide × 10','Thoracic rotation × 8 / taraf','Scapular push-up × 10','Foam roller üstünde torakal ekstansiyon × 10','Chin tuck × 10, 3 sn tut','İlk harekette 2–3 ısınma seti']
 };
 const RUNS=[
   {w:'Hazırlık',p:'Bisiklet, eliptik veya eğimli yürüyüş',d:'30–45 dk, Zone 2',ph:null},
@@ -338,7 +339,7 @@ function renderBody(){
   let spark='';
   if(b.length>1){const ks=b.map(x=>x.kg),mn=Math.min(...ks),mx=Math.max(...ks),rg=mx-mn||1;const pts=b.map((x,i)=>(i/(b.length-1)*300).toFixed(1)+','+(64-(x.kg-mn)/rg*56).toFixed(1)).join(' ');spark=`<svg class="spark" viewBox="0 0 300 70" preserveAspectRatio="none" aria-hidden="true"><polyline points="${pts}" fill="none" stroke="var(--red)" stroke-width="3" vector-effect="non-scaling-stroke" stroke-linejoin="round"/></svg>`}
   const diff=last&&first&&b.length>1?last.kg-first.kg:null;
-  return `<div class="wrap"><h1 class="title">Ölçüm</h1><p class="mini" style="margin:0">Hedef: 91–93 kg, yağ ~%14–15. Haftada 1 kez, sabah aç karnına tartıl.</p>
+  return `<div class="wrap"><h1 class="title">Ölçüm</h1><p class="mini" style="margin:0">Başlangıç (25 Kasım): 95,6 kg, yağ %21,7, bel 92 cm. Hedef: 91–93 kg, yağ ~%14–15. Haftada 1 kez, sabah aç karnına tartıl. Vücut analizini 4–6 haftada bir aynı koşullarda tekrarla.</p>
   <section class="card">${last?`<div class="big">${esc(fk(last.kg))}<span style="font-size:.4em"> kg</span></div><p class="mini" style="margin:2px 0 0">${esc(fmtD(last.date))}${diff!=null?' · başlangıca göre '+(diff>0?'+':'')+esc(fk(Math.round(diff*10)/10))+' kg':''}${last.w?' · bel '+esc(fk(last.w))+' cm':''}</p>${spark}`:'<p style="margin:0">Henüz ölçüm yok. İlk tartını aşağıya gir.</p>'}</section>
   <section class="card"><div class="grid2"><label class="f">Tarih<input type="date" id="bd" value="${today()}"></label><label class="f">Kilo (kg)<input id="bk" inputmode="decimal" autocomplete="off" placeholder="${last?esc(fk(last.kg)):'95'}"></label><label class="f">Bel (cm)<input id="bw" inputmode="decimal" autocomplete="off" placeholder="isteğe bağlı"></label></div><button class="btn red" data-act="bodysave">Ölçümü kaydet</button></section>
   ${b.length?`<h2 class="h2">Tüm ölçümler</h2>${b.slice().reverse().map(x=>`<div class="line"><span>${esc(fmtD(x.date))}</span><span>${esc(fk(x.kg))} kg${x.w?' · '+esc(fk(x.w))+' cm':''} <button class="del" style="margin:0 0 0 8px;height:34px" data-act="bodydel" data-date="${esc(x.date)}" aria-label="Ölçümü sil">Sil</button></span></div>`).join('')}`:''}
